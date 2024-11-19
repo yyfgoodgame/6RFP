@@ -285,7 +285,7 @@ def load_nolabel_ssh_data(file):
 #
 #     for i in range(label_name.__len__()):
 #         for j in range(label_name.__len__()):
-#             color = (1, 1, 1) if i == j else (0, 0, 0)  # 对角线字体白色，其他黑色
+#             color = (1, 1, 1) if i == j else (0, 0, 0)  
 #             value = float(format('%.2f' % cm[j, i]))
 #             plt.text(i, j, value, verticalalignment='center', horizontalalignment='center', color=color)
 #
@@ -320,7 +320,7 @@ def load_nolabel_ssh_data(file):
 # #
 # #     tree_model=DecisionTreeClassifier(criterion=my_criterion,max_depth=None,random_state=0,splitter="best")
 # #
-# #     # 喂入数据
+# #     
 # #     vendor_dict={'ciscoSystems': 1, 'Juniper Networks, Inc.': 2, 'HUAWEI Technology Co.,Ltd': 3, 'MikroTik': 4, 'H3C': 5,}
 # #     vendor_dict={'HUAWEI Technology Co.,Ltd': 1, 'Sagemcom Broadband SAS': 2, 'zte corporation': 3, 'Intelbras': 4, 'Fiberhome Telecommunication Technologies Co.,LTD': 5}
 # #     tree_model.fit(XX_T,YY_T)
@@ -409,7 +409,7 @@ def load_nolabel_ssh_data(file):
 # #                            filled=True, rounded=True,
 # #                            special_characters=True)
 #
-# # # 使用Graphviz的Python接口将DOT数据渲染为图形
+# # 
 # #     graph = graphviz.Source(dot_data)
 # #     graph.render("vendor_gini", view=True)
 #
