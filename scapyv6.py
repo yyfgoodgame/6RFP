@@ -109,7 +109,6 @@ for i in range(0, len(target_ips), batch_size):
     batch_results = process_batch(batch)
     total_results.update(batch_results)
 
-    # 将当前批次结果写入JSON文件
     with open(output_filename, "w") as json_file:
         json.dump(total_results, json_file, indent=4)
 
