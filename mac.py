@@ -2,52 +2,52 @@ import ipaddress
 import csv
 
 def load_ipv6_addresses(ipv6_file):
-    """加载 IPv6 地址文件，返回地址列表。"""
+    """Load IPv6 address file and return a list of addresses."""
     with open(ipv6_file, 'r') as f:
         ipv6_addresses = [line.strip() for line in f if line.strip()]
     return ipv6_addresses
 
 def is_eui64_address(ipv6_addr):
-    """判断 IPv6 地址是否是通过 EUI-64 方法生成的。
+    """Determine if an IPv6 address is generated using the EUI-64 method.
 
-    如果接口标识符的中间包含 'FFFE'，则认为是 EUI-64 地址。
+    If the interface identifier contains 'FFFE' in the middle, it is considered an EUI-64 address.
     """
     try:
-        # 将字符串转换为 IPv6Address 对象
+        # Convert the string to an IPv6Address object
         addr = ipaddress.IPv6Address(ipv6_addr)
-        # 获取接口标识符（后 64 位）
+        # Get the interface identifier (last 64 bits)
         interface_id = addr.packed[-8:]
-        # 检查中间的 2 个字节是否为 FFFE
+        # Check if the middle 2 bytes are FFFE
         if interface_id[3:5] == b'\xFF\xFE':
             return True
         else:
             return False
     except ipaddress.AddressValueError:
-        # 非法的 IPv6 地址
+        # Invalid IPv6 address
         return False
 
 def extract_mac_from_ipv6(ipv6_addr):
-    """从 EUI-64 生成的 IPv6 地址中提取 MAC 地址。
+    """Extract MAC address from an EUI-64 generated IPv6 address.
 
-    返回标准格式的 MAC 地址字符串，如 'AA-BB-CC-DD-EE-FF'。
+    Returns the MAC address in standard format, e.g., 'AA-BB-CC-DD-EE-FF'.
     """
     addr = ipaddress.IPv6Address(ipv6_addr)
     interface_id = addr.packed[-8:]
-    # 提取 MAC 地址的前 3 个字节和后 3 个字节
+    # Extract the first 3 bytes and the last 3 bytes of the MAC address
     mac_bytes = interface_id[:3] + interface_id[5:]
-    # 将第一个字节的第 7 位（Universal/Local 位）取反
+    # Flip the 7th bit (Universal/Local bit) of the first byte
     mac_bytes = bytearray(mac_bytes)
     mac_bytes[0] ^= 0x02
-    # 构造标准格式的 MAC 地址字符串
+    # Format the MAC address as a standard string
     mac_str = '-'.join('{:02X}'.format(b) for b in mac_bytes)
     return mac_str
 
 def load_oui_data(oui_csv_file):
-    """加载 OUI CSV 文件，创建 OUI 到厂商名称的映射字典。"""
+    """Load OUI CSV file and create a mapping dictionary from OUI to manufacturer name."""
     oui_dict = {}
     with open(oui_csv_file, 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter='\t')
-        next(reader)  # 跳过表头
+        next(reader)  # Skip the header
         for row in reader:
             if len(row) >= 3:
                 oui = row[1].replace('-', '').replace(':', '').upper()
@@ -56,7 +56,7 @@ def load_oui_data(oui_csv_file):
         return oui_dict
 
 def match_manufacturers(ipv6_addresses, oui_dict):
-    """匹配厂商，返回 EUI-64 地址列表、对应的 MAC 地址列表和匹配结果列表。"""
+    """Match manufacturers and return lists of EUI-64 addresses, corresponding MAC addresses, and matching results."""
     eui64_addresses = []
     mac_addresses = []
     results = []
@@ -65,7 +65,7 @@ def match_manufacturers(ipv6_addresses, oui_dict):
             eui64_addresses.append(ipv6_addr)
             mac_addr = extract_mac_from_ipv6(ipv6_addr)
             mac_addresses.append(mac_addr)
-            # 提取 OUI（前 6 个字符，不含分隔符）
+            # Extract OUI (first 6 characters without separators)
             oui = mac_addr.replace('-', '')[:6]
             if oui in oui_dict:
                 manufacturer = oui_dict[oui]
@@ -73,49 +73,49 @@ def match_manufacturers(ipv6_addresses, oui_dict):
     return eui64_addresses, mac_addresses, results
 
 def save_mac_addresses(mac_addresses, mac_file):
-    """将提取的 MAC 地址保存到文件。"""
+    """Save the extracted MAC addresses to a file."""
     with open(mac_file, 'w', encoding='utf-8') as f:
         for mac_addr in mac_addresses:
             f.write(f'{mac_addr}\n')
 
 def save_results(results, output_file):
-    """将匹配到的 IPv6 地址、MAC 地址和厂商名称保存到文件。"""
+    """Save the matched IPv6 addresses, MAC addresses, and manufacturer names to a file."""
     with open(output_file, 'w', encoding='utf-8') as f:
         for ipv6_addr, mac_addr, manufacturer in results:
             f.write(f'{ipv6_addr}\t{mac_addr}\t{manufacturer}\n')
 
 def main():
-    """总函数，整合所有功能。"""
-    ipv6_file = 'itdk_address.txt'         # 输入的 IPv6 地址文件
-    oui_csv_file = 'oui.csv'                 # OUI CSV 文件
-    eui64_file = 'itdk_address_eui.txt'       # 保存初次找到的 EUI-64 地址
-    mac_file = 'mac_addresses.txt'           # 保存提取的 MAC 地址
-    output_file = 'eui64_manufacturers.txt'  # 保存匹配结果
+    """Main function that integrates all functionalities."""
+    ipv6_file = 'itdk_address.txt'         # Input IPv6 address file
+    oui_csv_file = 'oui.csv'               # OUI CSV file
+    eui64_file = 'itdk_address_eui.txt'    # Save initially found EUI-64 addresses
+    mac_file = 'mac_addresses.txt'         # Save extracted MAC addresses
+    output_file = 'eui64_manufacturers.txt'  # Save matching results
 
-    # 加载数据
+    # Load data
     ipv6_addresses = load_ipv6_addresses(ipv6_file)
     oui_dict = load_oui_data(oui_csv_file)
 
-    # 匹配厂商
+    # Match manufacturers
     eui64_addresses, mac_addresses, results = match_manufacturers(ipv6_addresses, oui_dict)
 
-    # 保存初次找到的 EUI-64 地址
+    # Save initially found EUI-64 addresses
     save_eui64_addresses(eui64_addresses, eui64_file)
 
-    # 保存提取的 MAC 地址
+    # Save extracted MAC addresses
     save_mac_addresses(mac_addresses, mac_file)
 
-    # 保存匹配结果
+    # Save matching results
     save_results(results, output_file)
 
-    # 输出处理信息
-    print(f'已处理完毕，共找到 {len(eui64_addresses)} 个 EUI-64 地址，其中 {len(results)} 个匹配到厂商信息。')
-    print(f'初次找到的 EUI-64 地址已保存到 {eui64_file}。')
-    print(f'提取的 MAC 地址已保存到 {mac_file}。')
-    print(f'匹配结果已保存到 {output_file}。')
+    # Output processing information
+    print(f'Processing completed. Found {len(eui64_addresses)} EUI-64 addresses, {len(results)} matched with manufacturer info.')
+    print(f'Initially found EUI-64 addresses saved to {eui64_file}.')
+    print(f'Extracted MAC addresses saved to {mac_file}.')
+    print(f'Matching results saved to {output_file}.')
 
 def save_eui64_addresses(eui64_addresses, eui64_file):
-    """将初次找到的 EUI-64 地址保存到文件。"""
+    """Save the initially found EUI-64 addresses to a file."""
     with open(eui64_file, 'w', encoding='utf-8') as f:
         for ipv6_addr in eui64_addresses:
             f.write(f'{ipv6_addr}\n')
